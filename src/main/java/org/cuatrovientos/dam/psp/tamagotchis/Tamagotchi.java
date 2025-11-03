@@ -142,4 +142,23 @@ public class Tamagotchi implements Runnable {
     public String getName() {
         return this.name;
     }
+    
+    
+    //para que el cuidador mande ordenes al buzon actionQueue
+    
+    public void feed() {
+    	this.actionQueue.offer(Action.FEED);
+    }
+    
+    public void clean() {
+    	this.actionQueue.offer(Action.CLEAN);
+    }
+    
+    public void play() {
+    	this.actionQueue.offer(Action.PLAY);
+    }
+    
+    public String getStatus() {
+    	return String.format(" ->> | VIVo : %-5b | Suciedad: %d/10", name, alive, dirtiness.get());
+    }
 }
