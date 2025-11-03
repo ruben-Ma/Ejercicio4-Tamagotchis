@@ -7,13 +7,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+
 /**
  * Clase principal que actúa como el Cuidador.
  * Gestiona el ciclo de vida de los Tamagotchis.
  */
 public class Cuidador {
 
-    private static final int NUM_TAMAGOTCHIS = 3;
+    private static final int NUM_TAMAGOTCHIS = 5;
 
     private final ExecutorService mundo;
     
