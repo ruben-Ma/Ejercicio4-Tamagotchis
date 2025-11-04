@@ -1,22 +1,22 @@
 package org.cuatrovientos.dam.psp.tamagotchis;
 
 import java.util.HashMap;
+import java.util.InputMismatchException; 
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-
 /**
  * Clase principal que actúa como el Cuidador.
  * Gestiona el ciclo de vida de los Tamagotchis.
  */
 public class Cuidador {
-	
-	private final Scanner scanner;
+    
+    private final Scanner scanner;
 
-    private static final int NUM_TAMAGOTCHIS = 5;
+    private static final int NUM_TAMAGOTCHIS = 3;
 
     private final ExecutorService mundo;
     
@@ -34,8 +34,11 @@ public class Cuidador {
         System.out.println("--- Iniciando el Mundo Tamagotchi ---");
         
         for (int i = 0; i < NUM_TAMAGOTCHIS; i++) {
-            String name = "Tamagotchi-" + i;
-            Tamagotchi t = new Tamagotchi(name);
+            // El nombre aquí estaba diferente en tu código, usamos el "Tama-"
+            String name = "Tama-" + i; 
+            int speed = (i + 2) * 1000;
+            Tamagotchi t = new Tamagotchi(name, speed, this.scanner);
+            
             misTamagotchis.put(name, t);
             mundo.submit(t);
         }
@@ -43,48 +46,54 @@ public class Cuidador {
         System.out.println("--- " + NUM_TAMAGOTCHIS + " Tamagotchis han sido lanzados. ---");
         
         
-   buclePrincipalDelCuidador();
+        buclePrincipalDelCuidador();
         
         
         apagarMundo();
         scanner.close();
     }
     
-    
+    /**
+     * Bucle del menú interactivo del Cuidador (con sincronización).
+     */
     private void buclePrincipalDelCuidador() {
         boolean salir = false;
         while (!salir) {
-            printMenu();
-            try {
-                int opcion = scanner.nextInt();
-                scanner.nextLine(); // Consumir el newline
+            
+            // El Cuidador "adquiere el bloqueo" de la consola
+            synchronized (this.scanner) {
+                printMenu(); // <-- Dentro del bloque
+                try {
+                    int opcion = scanner.nextInt();
+                    scanner.nextLine(); // Consumir el newline
 
-                switch (opcion) {
-                    case 1:
-                        interactuar(Action.FEED);
-                        break;
-                    case 2:
-                        interactuar(Action.CLEAN);
-                        break;
-                    case 3:
-                        interactuar(Action.PLAY);
-                        break;
-                    case 4:
-                        mostrarEstado();
-                        break;
-                    case 0:
-                        salir = true;
-                        break;
-                    default:
-                        System.out.println("Opción no válida.");
+                    switch (opcion) {
+                        case 1:
+                            interactuar(Action.FEED);
+                            break;
+                        case 2:
+                            interactuar(Action.CLEAN);
+                            break;
+                        case 3:
+                            interactuar(Action.PLAY);
+                            break;
+                        case 4:
+                            mostrarEstado();
+                            break;
+                        case 0:
+                            salir = true;
+                            break;
+                        default:
+                            System.out.println("Opción no válida.");
+                    }
+                } catch (InputMismatchException e) { 
+                    System.out.println("Por favor, introduce un número.");
+                    scanner.nextLine(); // Limpiar el buffer
                 }
-            } catch (Exception e) {
-                System.out.println("Por favor, introduce un número.");
-                scanner.nextLine(); // Limpiar el buffer
-            }
+            } 
             
             
-            try { Thread.sleep(100); } catch (InterruptedException e) {}
+            try { Thread.sleep(50); } catch (InterruptedException e) {}
         }
     }
     
@@ -145,7 +154,7 @@ public class Cuidador {
         
         mundo.shutdownNow();
         try {
-           
+            
             mundo.awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             System.err.println("Problemas al apagar el mundo.");
