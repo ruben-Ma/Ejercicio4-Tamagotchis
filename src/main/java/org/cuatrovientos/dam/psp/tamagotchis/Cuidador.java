@@ -34,9 +34,10 @@ public class Cuidador {
         System.out.println("--- Iniciando el Mundo Tamagotchi ---");
         
         for (int i = 0; i < NUM_TAMAGOTCHIS; i++) {
-            // El nombre aquí estaba diferente en tu código, usamos el "Tama-"
+           
             String name = "Tama-" + i; 
             int speed = (i + 2) * 1000;
+            
             Tamagotchi t = new Tamagotchi(name, speed, this.scanner);
             
             misTamagotchis.put(name, t);
@@ -53,19 +54,16 @@ public class Cuidador {
         scanner.close();
     }
     
-    /**
-     * Bucle del menú interactivo del Cuidador (con sincronización).
-     */
+    
     private void buclePrincipalDelCuidador() {
         boolean salir = false;
         while (!salir) {
             
-            // El Cuidador "adquiere el bloqueo" de la consola
             synchronized (this.scanner) {
-                printMenu(); // <-- Dentro del bloque
+                printMenu(); 
                 try {
                     int opcion = scanner.nextInt();
-                    scanner.nextLine(); // Consumir el newline
+                    scanner.nextLine(); 
 
                     switch (opcion) {
                         case 1:
@@ -80,6 +78,12 @@ public class Cuidador {
                         case 4:
                             mostrarEstado();
                             break;
+                            
+                       
+                        case 5:
+                            intentarMatar();
+                            break;
+                            
                         case 0:
                             salir = true;
                             break;
@@ -97,12 +101,14 @@ public class Cuidador {
         }
     }
     
+    
     private void printMenu() {
         System.out.println("\n--- MENÚ DEL CUIDADOR ---");
         System.out.println("1. Alimentar un Tamagotchi");
         System.out.println("2. Limpiar un Tamagotchi");
         System.out.println("3. Jugar con un Tamagotchi");
         System.out.println("4. Ver estado de todos");
+        System.out.println("5. Intentar matar (solo si está ocioso)"); // <-- NUEVA LÍNEA
         System.out.println("0. Salir");
         System.out.print("Elige una opción: ");
     }
@@ -148,6 +154,20 @@ public class Cuidador {
         return t;
     }
 
+    
+    private void intentarMatar() {
+        Tamagotchi t = seleccionarTamagotchi();
+        if (t != null) {
+            System.out.println("[Cuidador] Solicitando muerte a " + t.getName() + "...");
+            boolean exito = t.requestKill();
+            
+            if (exito) {
+                System.out.println("[Cuidador] ...la solicitud fue aceptada.");
+            } else {
+                System.out.println("[Cuidador] ...la solicitud fue rechazada (está ocupado).");
+            }
+        }
+    }
     
     private void apagarMundo() {
         System.out.println("--- APAGANDO EL MUNDO ---");
