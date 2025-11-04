@@ -197,7 +197,7 @@ public class Cuidador {
         } catch (InterruptedException e) {
             System.err.println("Problemas al apagar el mundo.");
         }
-        System.out.println("--- El mundo esta en silencio. ---");
+        System.out.println("--- TODOS MUERTOS ---");
     }
 
     
