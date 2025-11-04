@@ -2,9 +2,9 @@
 
 
 
-!\[hecho con: Java](https://img.shields.io/badge/hecho\_con-Java-blue?logo=java\&style=for-the-badge)
+!\[hecho con: Java]
 
-!\[asignatura: PSP](https://img.shields.io/badge/asignatura-PSP-orange?style=for-the-badge)
+!\[asignatura: PSP]
 
 
 
