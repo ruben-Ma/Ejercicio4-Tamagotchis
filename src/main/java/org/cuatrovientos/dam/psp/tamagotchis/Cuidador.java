@@ -9,23 +9,30 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Clase principal que actúa como el Cuidador.
- * Gestiona el ciclo de vida de los Tamagotchis.
+ * esta es la clase principal, el cuidador.
+ * maneja a todos los tamagotchis (los hilos).
  */
 public class Cuidador {
     
+    // el scanner para leer del teclado
     private final Scanner scanner;
 
+    // cuantos tamas vamos a tener
     private static final int NUM_TAMAGOTCHIS = 3;
 
+    // el undo que controla los hilos
     private final ExecutorService mundo;
     
     
+    // un mapa para guardar los tamas y buscarlos por nombre
     private final Map<String, Tamagotchi> misTamagotchis;
 
     public Cuidador() {
+        // creamos el 'mundo' con 3 hilos, uno pa cada tama
         this.mundo = Executors.newFixedThreadPool(NUM_TAMAGOTCHIS);
+        // creamos el mapa vacio
         this.misTamagotchis = new HashMap<>();
+        // creamos el unico scanner que usaremos
         this.scanner = new Scanner(System.in);
     }
 
@@ -33,39 +40,46 @@ public class Cuidador {
     public void iniciar() {
         System.out.println("--- Iniciando el Mundo Tamagotchi ---");
         
+        // bucle para crear los 3 tamas
         for (int i = 0; i < NUM_TAMAGOTCHIS; i++) {
            
+            // les damos un nombre, Tama-0, Tama-1
             String name = "Tama-" + i; 
+            // velocidades de comida 
             int speed = (i + 2) * 1000;
             
+            // creamos el tama y le pasamos el scanner compartido 
             Tamagotchi t = new Tamagotchi(name, speed, this.scanner);
             
+            // lo metemos al mapa
             misTamagotchis.put(name, t);
+            // lo lanzamos al mundo! esto llama a su run
             mundo.submit(t);
         }
         
         System.out.println("--- " + NUM_TAMAGOTCHIS + " Tamagotchis han sido lanzados. ---");
         
         
-        buclePrincipalDelCuidador();
+        buclePrincipalDelCuidador(); // ahora llamamos al menu
         
         
-        apagarMundo();
-        scanner.close();
+        apagarMundo(); // cuando salgamos del menu, apagamos todo
+        scanner.close(); // cerramos el scanner al final
     }
     
     
     private void buclePrincipalDelCuidador() {
-        boolean salir = false;
+        boolean salir = false; // variable para controlar el bucle del menu
         while (!salir) {
             
+            // bloqueamos el scanner para que no se pise con el juego
             synchronized (this.scanner) {
-                printMenu(); 
+                printMenu(); // imprime las opciones
                 try {
-                    int opcion = scanner.nextInt();
-                    scanner.nextLine(); 
+                    int opcion = scanner.nextInt(); // lee el numero
+                    scanner.nextLine(); // limpia el buffer 
 
-                    switch (opcion) {
+                    switch (opcion) { // un switch para ver que hacemos
                         case 1:
                             interactuar(Action.FEED);
                             break;
@@ -81,45 +95,47 @@ public class Cuidador {
                             
                        
                         case 5:
-                            intentarMatar();
+                            intentarMatar(); // la opcion de matar
                             break;
                             
                         case 0:
-                            salir = true;
+                            salir = true; // cambiamos  a true para salir del while
                             break;
                         default:
-                            System.out.println("Opción no válida.");
+                            System.out.println("Opcion no valida.");
                     }
-                } catch (InputMismatchException e) { 
-                    System.out.println("Por favor, introduce un número.");
-                    scanner.nextLine(); // Limpiar el buffer
+                } catch (InputMismatchException e) { // por si escriben letras en vez de numeros
+                    System.out.println("Por favor, introduce un numero.");
+                    scanner.nextLine(); // limpiamos el buffer si puso letras
                 }
-            } 
+            } // aqui se suelta el bloqueo  del scanner
             
             
+            // pequeña pausa para que otros hilos respiren
             try { Thread.sleep(50); } catch (InterruptedException e) {}
         }
     }
     
     
+    // metodo solo para imprimir el texto del menu
     private void printMenu() {
-        System.out.println("\n--- MENÚ DEL CUIDADOR ---");
-        System.out.println("1. Alimentar un Tamagotchi");
-        System.out.println("2. Limpiar un Tamagotchi");
-        System.out.println("3. Jugar con un Tamagotchi");
-        System.out.println("4. Ver estado de todos");
-        System.out.println("5. Intentar matar (solo si está ocioso)"); // <-- NUEVA LÍNEA
-        System.out.println("0. Salir");
-        System.out.print("Elige una opción: ");
+        System.out.println("\n------------ MENU DEL CUIDADOR ---------------");
+        System.out.println("1.        Alimentar un Tamagotchi");
+        System.out.println("2.        Limpiar un Tamagotchi");
+        System.out.println("3.        Jugar con un Tamagotchi");
+        System.out.println("4.        Ver estado de todos");
+        System.out.println("5.        Intentar matar (solo si esta ocioso)");
+        System.out.println("0.        Salir");
+        System.out.println("Elige una opcion: ");
     }
 
     
     private void interactuar(Action accion) {
-        Tamagotchi t = seleccionarTamagotchi();
-        if (t != null) {
-            System.out.println("[Cuidador] Enviando orden '" + accion + "' a " + t.getName());
-            switch (accion) {
-                case FEED: t.feed(); break;
+        Tamagotchi t = seleccionarTamagotchi(); // primero elegimos a quien
+        if (t != null) { // si el tama existe y esta vivo
+            System.out.println(" Enviando orden '" + accion + "' a " + t.getName());
+            switch (accion) { // segun la accion, llamamos al metodo
+                case FEED: t.feed(); break; //  solo mete la orden en el buzon
                 case CLEAN: t.clean(); break;
                 case PLAY: t.play(); break;
             }
@@ -128,43 +144,43 @@ public class Cuidador {
 
     
     private void mostrarEstado() {
-        System.out.println("\n[Cuidador] Obteniendo estado de todos:");
-        for (Tamagotchi t : misTamagotchis.values()) {
-            System.out.println(t.getStatus());
+        System.out.println("\n Obteniendo estado de todos:");
+        for (Tamagotchi t : misTamagotchis.values()) { // recorre el mapa de tamas
+            System.out.println(t.getStatus()); // llama al get) de cada uno
         }
     }
     
     
     private Tamagotchi seleccionarTamagotchi() {
-        System.out.println("[Cuidador] ¿Con qué Tamagotchi? (Vivos)");
+        System.out.println(" ¿Con que Tamagotchi? (Vivos)");
         
-        for (Tamagotchi t : misTamagotchis.values()) {
-            if (t.isAlive()) {
+        for (Tamagotchi t : misTamagotchis.values()) { // recorre el mapa
+            if (t.isAlive()) { // y muestra solo los vivos
                 System.out.println("  - " + t.getName());
             }
         }
         System.out.print("Escribe el nombre (ej. Tama-0): ");
-        String nombre = scanner.nextLine();
+        String nombre = scanner.nextLine(); // pide el nombre por teclado
         
-        Tamagotchi t = misTamagotchis.get(nombre);
-        if (t == null || !t.isAlive()) {
-            System.out.println("Ese Tamagotchi no existe o está muerto.");
+        Tamagotchi t = misTamagotchis.get(nombre); // lo busca en el mapa
+        if (t == null || !t.isAlive()) { // comprueba que existe y esta vivo
+            System.out.println("Ese Tamagotchi no existe o esta muerto.");
             return null;
         }
-        return t;
+        return t; // devuelve el tama que hemos encontrado
     }
 
     
     private void intentarMatar() {
-        Tamagotchi t = seleccionarTamagotchi();
-        if (t != null) {
-            System.out.println("[Cuidador] Solicitando muerte a " + t.getName() + "...");
-            boolean exito = t.requestKill();
+        Tamagotchi t = seleccionarTamagotchi(); // elige a quien matar
+        if (t != null) { // si existe...
+            System.out.println(" Vas a matar a " + t.getName() + "...");
+            boolean exito = t.requestKill(); // llamamos al metodo del tamagotchi
             
-            if (exito) {
-                System.out.println("[Cuidador] ...la solicitud fue aceptada.");
-            } else {
-                System.out.println("[Cuidador] ...la solicitud fue rechazada (está ocupado).");
+            if (exito) { // el tama devuelve true si estaba ocioso
+                System.out.println("MUERTOOOO.");
+            } else { // devuelve false si estaba ocupado
+                System.out.println("No puedes.");
             }
         }
     }
@@ -172,19 +188,21 @@ public class Cuidador {
     private void apagarMundo() {
         System.out.println("--- APAGANDO EL MUNDO ---");
         
-        mundo.shutdownNow();
+        // manda una interrupcion  a todos los hilos
+        mundo.shutdownNow(); 
         try {
             
+            // espera 5 segundos a que los hilos terminen
             mundo.awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             System.err.println("Problemas al apagar el mundo.");
         }
-        System.out.println("--- El mundo está en silencio. ---");
+        System.out.println("--- El mundo esta en silencio. ---");
     }
 
     
     public static void main(String[] args) {
-        Cuidador cuidador = new Cuidador();
-        cuidador.iniciar();
+        Cuidador cuidador = new Cuidador(); // crea el objeto cuidador
+        cuidador.iniciar(); // arranca el programa
     }
 }

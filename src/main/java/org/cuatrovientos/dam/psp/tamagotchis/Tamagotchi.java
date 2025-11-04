@@ -1,23 +1,21 @@
 package org.cuatrovientos.dam.psp.tamagotchis;
 
-// Imports de concurrencia
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-// Imports del juego
 import java.util.InputMismatchException;
 import java.util.Random;
 import java.util.Scanner;
 
 /**
  * Representa un Tamagotchi.
- * Cada instancia está diseñada para correr en su propio hilo.
+ * cada intancia es un hilo.
  */
 public class Tamagotchi implements Runnable {
 
-    // --- Atributos de Identidad y Estado ---
+    //  Atributos de Identidad y Estado 
     private final String name;
     private final int eatingSpeedMs;
     private volatile boolean alive;
@@ -36,11 +34,11 @@ public class Tamagotchi implements Runnable {
 
    
     private long startTime;      
-    private long lastDirtTick;   
+    private long ensuciarTama;   
     
     
     /**
-     * Constructor del Tamagotchi (Completo).
+     * Constructor del Tamagotchi 
      * @param name Nombre.
      * @param eatingSpeedMs Velocidad de comida.
      * @param sharedScanner El Scanner global (System.in) del Cuidador.
@@ -52,56 +50,56 @@ public class Tamagotchi implements Runnable {
         this.random = new Random();
         this.alive = true;
         
-        this.dirtiness = new AtomicInteger(0);
-        this.actionQueue = new LinkedBlockingQueue<>();
+        this.dirtiness = new AtomicInteger(0); //contador de suiciedad el tamagotchi
+        this.actionQueue = new LinkedBlockingQueue<>();// buzon de ordenes que pondra el cuidador a la cola
     }
 
     
     
     private void handleAction(Action action) throws InterruptedException{
         
-        System.out.println(" [" + name + "] (Accion) Recibida orden"+ action);
+        System.out.println(" [" + name + "]  Recibida orden por el cuidador"+ action);
         
         switch(action) {
         
         case FEED: 
-            System.out.println(" [" + name + "] (Accion) Empieza a comer");
-            Thread.sleep(this.eatingSpeedMs); 
-            System.out.println(" [" + name + "] (Accion) Acaba de comer");
+            System.out.println(" [" + name + "]  Empieza a comer");
+            Thread.sleep(this.eatingSpeedMs); //comen a diferentes velocidades
+            System.out.println(" [" + name + "]  Acaba de comer");
             break;
             
         case CLEAN: 
-            System.out.println(" [" + name + "] (Accion) Empieza a bañarse");
-            Thread.sleep(5000);
-            this.dirtiness.set(0);
-            System.out.println(" [" + name + "] (Accion) Esta limpio");
+            System.out.println(" [" + name + "]  Empieza a bañarse");
+            Thread.sleep(5000);//espera
+            this.dirtiness.set(0);//contador a 0
+            System.out.println(" [" + name + "]  Esta limpio");
             break;
             
         case PLAY: 
-            synchronized (this.sharedScanner) {
-                playGame();
+            synchronized (this.sharedScanner) {//mismo scanner
+                playGame();//llama al metodojuego
             }
             break;
         }
     }
     
     
-    private void playGame() {
-        if (!alive) return; 
+    private void playGame() {//juego
+        if (!alive) return; //mira si esta vivo
 
-        System.out.println("\n  [" + name + "] (Acción) 🎲 ¡Quiero jugar!");
+        System.out.println("\n  [" + name + "]   A jugar con matesss");
         boolean acierto = false;
 
-        while (!acierto && alive) {
+        while (!acierto && alive) {//si esta vivo y es cintratrio a falso
             int a = random.nextInt(10); 
-            int b = random.nextInt(10);
+            int b = random.nextInt(10);//dos numeros aleatorios
             
-            if (a + b >= 10) continue; 
+            if (a + b >= 10) continue; //que no sea as de 10 la suma
             
             int R_CORRECTA = a + b;
             System.out.print("\n>>> [" + name + "] pregunta: ¿Cuánto es " + a + " + " + b + "? ");
             
-            int r_cuidador = -1;
+            int r_cuidador = -1;//valor negativo para que nunca se inice como correcta
             try {
                 r_cuidador = sharedScanner.nextInt();
             } catch (InputMismatchException e) {
@@ -110,14 +108,14 @@ public class Tamagotchi implements Runnable {
                  continue; // Volver a preguntar
             }
 
-            if (r_cuidador == R_CORRECTA) {
+            if (r_cuidador == R_CORRECTA) {// si las dos variables son iguales
                 System.out.println("  [" + name + "] ¡Sí! ¡Correcto! ¡Qué divertido!");
-                acierto = true;
+                acierto = true;//acierto es diferente a false
             } else {
                 System.out.println("  [" + name + "] ¡No! ¡Fallaste! Juguemos otra vez...");
             }
         }
-        System.out.println("  [" + name + "] (Acción)  ...terminé de jugar.");
+        System.out.println("  [" + name + "]   ...terminé de jugar.");
         
         if (sharedScanner.hasNextLine()) {
             sharedScanner.nextLine();
@@ -125,30 +123,30 @@ public class Tamagotchi implements Runnable {
     }
      
     
-    private void checkAutonomousStatus() {
+    private void checkLife() {
         
         long now = System.currentTimeMillis();
         
         // Muerte por edad
-        if( now - startTime > 300_000) { 
-            System.out.println(" [" + name + "] (Vida) Mi tiempo ha pasado... voy a morir");
-            this.alive = false;
+        if( now - startTime > 300_000) { //muere pasado 5 mins
+            System.out.println(" [" + name + "]  Mi tiempo ha pasado... voy a morir");
+            this.alive = false;//cambia a falso
             return;
         }
         
         
-        if( now - lastDirtTick > 20_000) {
-            this.lastDirtTick = now; 
-            int currentDirt = dirtiness.incrementAndGet();
+        if( now - ensuciarTama > 20_000) {//cada 20 segundos
+            this.ensuciarTama = now; 
+            int currentDirt = dirtiness.incrementAndGet();//incrimenta la suciedad
             
-            System.out.println(" [" + name + "] (Vida) Mi suciedad esta en "+ currentDirt);
+            System.out.println(" [" + name + "]  Mi suciedad esta en "+ currentDirt);
                     
-            if(currentDirt == 5) {
-                System.out.println(" [" + name + "] (Vida) Ya empiezo a estar muy sucio... voy por la mitad antes de morir de guarro");
+            if(currentDirt == 5) {//mensaje avso
+                System.out.println(" [" + name + "] Ya empiezo a estar muy sucio... voy por la mitad antes de morir de guarro");
             }
                     
             if(currentDirt >= 10) {
-                System.out.println(" [" + name + "] (Vida) Me muero por que no me has lavado.... Malditooo");
+                System.out.println(" [" + name + "] Ya que no me has lavado muero.... Malditooo");
                 this.alive = false;
                 return; 
             }
@@ -157,27 +155,27 @@ public class Tamagotchi implements Runnable {
      
     
     @Override
-    public void run() {
-        Thread.currentThread().setName("Tamagotchi-" + name);
+    public void run() {//donde pasa toodo el hilo swl tamagotchi
+        Thread.currentThread().setName("Tamagotchi-" + name);//nombra el hillo
         System.out.println(" ¡" + name + " ha nacido!");
         
-        this.startTime = System.currentTimeMillis();
-        this.lastDirtTick = System.currentTimeMillis();
+        this.startTime = System.currentTimeMillis();//guarda la hora de nacimiento
+        this.ensuciarTama = System.currentTimeMillis();//guarda cuanda se ensucia
 
         try {
-            while (this.alive) {
-                Action nextAction = actionQueue.poll(1, TimeUnit.SECONDS);
+            while (this.alive) {//bluce mientras esta vivp
+                Action nextAction = actionQueue.poll(1, TimeUnit.SECONDS);//buzon donde el hilo recoge actions
                 
                 if (nextAction != null) {
                    
-                    this.idle = false; // 1. Marcamos como OCUPADO
-                    handleAction(nextAction);
-                    this.idle = true;  // 2. Marcamos como OCIOSO
+                    this.idle = false; //  Marcamos como OCUPADO
+                    handleAction(nextAction);//ejecuta
+                    this.idle = true;  // Marcamos como OCIOSO
                    
                 }
                 
                 if (this.alive) {
-                    checkAutonomousStatus();
+                  checkLife();//comprueba lo sucio y que no esta muerto
                 }
             }
         } catch (InterruptedException e) {
@@ -213,19 +211,19 @@ public class Tamagotchi implements Runnable {
    
     public boolean requestKill() {
         
-        if (this.idle) {
-            System.out.println(" [" + name + "] (Vida) El cuidador me pide morir. Adiós...");
+        if (this.idle) {// si esta osocuio
+            System.out.println(" [" + name + "]  El cuidador me pide morir. Adiós...");
             this.alive = false; // Acepta la muerte
             return true;
         } else {
-            System.out.println(" [" + name + "] (Vida) ¡El cuidador quiere matarme pero estoy OCUPADO!");
+            System.out.println(" [" + name + "]  ¡El cuidador quiere matarme pero estoy OCUPADO!");
             return false; // Rechaza la muerte
         }
     }
     
     
     public String getStatus() {
-        // Añadimos el estado Ocioso (%-5b)
+        // muwatra los datos en formato
         return String.format(" ->> %s | VIVo : %-5b | Ocioso: %-5b | Suciedad: %d/10", 
                              name, alive, idle, dirtiness.get());
     }
